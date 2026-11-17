@@ -1,0 +1,47 @@
+# ==============================================================================
+# 启煊软件智能体 (Qixuan Agent) Python 依赖
+# 安装：pip install -r requirements.txt
+# ==============================================================================
+
+# ----- Web 框架与网关 -----
+fastapi>=0.104.0,<1
+uvicorn[standard]>=0.31.0,<1
+python-multipart>=0.0.9,<1
+
+# ----- HTTP 客户端 -----
+httpx[socks]>=0.27.0,<1
+
+# ----- 加密与安全 -----
+cryptography>=41.0.0,<51
+
+# ----- 数据验证 -----
+pydantic>=2.0.0,<3
+
+# ----- 配置文件解析 -----
+pyyaml>=6.0,<7
+python-dotenv>=1.0.0,<2
+
+# ----- 定时任务 -----
+croniter>=2.0.0,<7
+
+# ----- 飞书 SDK（企业 IM 接入）-----
+lark-oapi>=1.3.0,<2
+
+# ----- 钉钉 SDK（可选）-----
+# dingtalk-stream>=0.20.0
+# alibabacloud-dingtalk>=2.0.0
+
+# ----- Git 工具 -----
+gitpython>=3.1.0,<4
+
+# ----- 数据处理 -----
+# SQLite 内置于 Python 标准库，无需额外安装
+
+# ----- 日志 -----
+rich>=13.0.0,<15
+
+# ----- 测试 -----
+pytest>=7.0.0,<9
+pytest-asyncio>=0.21.0,<1
+pytest-cov>=4.0.0,<6
+httpx  # httpx.AsyncClient 用于测试

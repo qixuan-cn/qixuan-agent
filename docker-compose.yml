@@ -1,0 +1,111 @@
+# ==============================================================================
+# 启煊软件企业级智能体 (Qixuan Agent) Docker Compose 生产编排文件
+# 包含：Agent 核心网关服务、隔离执行沙盒代理、本地 Embedding 检索节点及可选本地 GPU 推理
+# ==============================================================================
+
+version: "3.9"
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Qixuan Agent 核心与网关主服务
+  # ----------------------------------------------------------------------------
+  qixuan-agent:
+    image: ghcr.io/nousresearch/hermes-agent:latest
+    container_name: qixuan-agent-core
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Shanghai
+      - HERMES_CONFIG_PATH=/app/config/config.yaml
+      - HERMES_DATA_DIR=/app/data
+      - DOCKER_HOST=tcp://qixuan-sandbox-proxy:2375
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml:ro
+      - ./skills:/app/skills:rw
+      - ./data:/app/data:rw
+      - ./workspace:/app/workspace:rw
+      - ./logs:/app/logs:rw
+    ports:
+      - "8090:8090" # Webhook 与企业机器人回调端口
+    depends_on:
+      - qixuan-sandbox-proxy
+      - qixuan-local-embedding
+    networks:
+      - qixuan-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ----------------------------------------------------------------------------
+  # 2. 安全 Docker 套接字代理（限制 Agent 仅能创建/销毁受限沙盒容器，防止宿主机逃逸）
+  # ----------------------------------------------------------------------------
+  qixuan-sandbox-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: qixuan-sandbox-proxy
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - NETWORKS=1
+      - EXEC=1
+      - POST=1
+      - VOLUMES=0
+      - SYSTEM=0
+      - SWARM=0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - qixuan-net
+
+  # ----------------------------------------------------------------------------
+  # 3. 本地企业知识库语义向量服务 (Hugging Face BAAI/bge-m3)
+  # ----------------------------------------------------------------------------
+  qixuan-local-embedding:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.5
+    container_name: qixuan-local-embedding
+    restart: unless-stopped
+    command: ["--model-id", "BAAI/bge-m3", "--port", "8080"]
+    volumes:
+      - ./hf_cache:/data
+    networks:
+      - qixuan-net
+
+  # ----------------------------------------------------------------------------
+  # 4. [可选] 涉密项目本地私有化 GPU 推理节点 (需宿主机安装 NVIDIA Container Toolkit)
+  # 启用方式: docker compose --profile confidential up -d
+  # ----------------------------------------------------------------------------
+  qixuan-local-vllm:
+    image: vllm/vllm-openai:latest
+    container_name: qixuan-local-vllm
+    profiles: ["confidential"]
+    restart: unless-stopped
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+      - VLLM_API_KEY=${LOCAL_VLLM_API_KEY}
+    command:
+      - "--model"
+      - "google/gemma-4-26b-a4b-it"
+      - "--served-model-name"
+      - "google/gemma-4-26b-a4b-it"
+      - "--max-model-len"
+      - "16384"
+      - "--gpu-memory-utilization"
+      - "0.90"
+    volumes:
+      - ./hf_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - qixuan-net
+
+networks:
+  qixuan-net:
+    driver: bridge

@@ -1,0 +1,51 @@
+# ==============================================================================
+# 启煊智能体 (Qixuan Agent) .gitignore
+# ==============================================================================
+
+# ----- 敏感密钥文件（严禁提交）-----
+.env
+.env.local
+*.key
+*.pem
+*.pfx
+secrets/
+
+# ----- 运行时数据（本地持久化，不入库）-----
+data/profiles/
+data/sqlite/
+data/logs/
+hf_cache/
+logs/
+workspace/
+deliverables/releases/
+
+# ----- Python 编译与缓存 -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.egg-info/
+dist/
+build/
+
+# ----- 虚拟环境 -----
+.venv/
+venv/
+env/
+
+# ----- IDE -----
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ----- Docker -----
+# docker-compose.override.yml  # 本地覆盖配置，按需 gitignore

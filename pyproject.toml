@@ -1,0 +1,67 @@
+[project]
+name = "qixuan-agent"
+version = "1.0.0"
+description = "启煊软件企业级智能体（Qixuan Agent）—— 基于 Hermes Agent 架构构建的持久记忆、技能自进化、多端协同智能体中枢"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+authors = [{ name = "启煊软件架构组（Qixuan Software Architecture Team）" }]
+license = "Proprietary"
+
+dependencies = [
+    "fastapi>=0.104.0,<1",
+    "uvicorn[standard]>=0.31.0,<1",
+    "httpx[socks]>=0.27.0,<1",
+    "pydantic>=2.0.0,<3",
+    "pyyaml>=6.0,<7",
+    "python-dotenv>=1.0.0,<2",
+    "croniter>=2.0.0,<7",
+    "cryptography>=41.0.0,<51",
+    "rich>=13.0.0,<15",
+    "lark-oapi>=1.3.0,<2",
+    "gitpython>=3.1.0,<4",
+    "python-multipart>=0.0.9,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0,<9",
+    "pytest-asyncio>=0.21.0,<1",
+    "pytest-cov>=4.0.0,<6",
+    "ruff>=0.4.0",
+    "mypy>=1.0.0",
+]
+dingtalk = [
+    "dingtalk-stream>=0.20.0",
+    "alibabacloud-dingtalk>=2.0.0",
+]
+
+[project.scripts]
+qixuan-agent = "gateway.webhook_router:app"
+qixuan-cron = "scripts.cron_runner:main"
+qixuan-learn = "scripts.learn:main"
+qixuan-health = "scripts.health_check:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "S", "B"]
+ignore = [
+    "S101",   # assert 语句在测试中合法
+    "S603",   # subprocess 调用（已审查）
+    "S607",   # subprocess partial path（已审查）
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
